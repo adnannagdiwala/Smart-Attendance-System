@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}History — Smart Attendance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Attendance History</h2>
+  <p>Browse and export past attendance records</p>
+</div>
+
+<!-- Date Filter -->
+<div class="card">
+  <div class="card-header">
+    <h3>Select Date</h3>
+    {% if selected_date %}
+      <button class="btn btn-secondary btn-sm" onclick="exportCSV('{{ selected_date }}')">
+        📥 Export CSV
+      </button>
+    {% endif %}
+  </div>
+
+  <div class="date-controls">
+    <input type="date" id="date-filter" value="{{ selected_date }}" />
+
+    {% if dates %}
+      <span style="color:var(--text-muted); font-size:0.82rem;">
+        or pick a recent date:
+      </span>
+      {% for date in dates[:5] %}
+        <a href="{{ url_for('history', date=date) }}" class="btn btn-secondary btn-sm">
+          {{ date }}
+        </a>
+      {% endfor %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- Attendance Table -->
+{% if selected_date %}
+  <div class="card">
+    <div class="card-header">
+      <h3>Records for {{ selected_date }}</h3>
+      <span class="badge badge-success">{{ attendance|length }} record{{ 's' if attendance|length != 1 }}</span>
+    </div>
+
+    {% if attendance %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in attendance %}
+              <tr>
+                <td><span class="badge-index">{{ loop.index }}</span></td>
+                <td>{{ record.name }}</td>
+                <td>{{ record.date }}</td>
+                <td>{{ record.time }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No records found for this date.</p>
+      </div>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <p>Select a date above to view attendance records.</p>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

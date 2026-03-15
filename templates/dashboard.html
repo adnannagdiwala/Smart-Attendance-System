@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Smart Attendance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Dashboard</h2>
+  <p>Today's attendance overview</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+  <div class="stat-card animate-in">
+    <div class="stat-icon">👥</div>
+    <div class="stat-value">{{ stats.people_count }}</div>
+    <div class="stat-label">Registered People</div>
+  </div>
+
+  <div class="stat-card animate-in">
+    <div class="stat-icon">✅</div>
+    <div class="stat-value">{{ stats.today_unique }}</div>
+    <div class="stat-label">Checked In Today</div>
+  </div>
+
+  <div class="stat-card animate-in">
+    <div class="stat-icon">📋</div>
+    <div class="stat-value">{{ stats.today_count }}</div>
+    <div class="stat-label">Total Logs Today</div>
+  </div>
+
+  <div class="stat-card animate-in">
+    <div class="stat-icon">🕐</div>
+    <div class="stat-value" style="font-size:1.4rem;">{{ stats.latest_time }}</div>
+    <div class="stat-label">Latest Check-in</div>
+    <div class="stat-detail">{{ stats.latest_name }}</div>
+  </div>
+</div>
+
+<!-- Today's Attendance Table -->
+<div class="card">
+  <div class="card-header">
+    <h3>Today's Attendance</h3>
+    <span class="badge badge-success">{{ attendance|length }} record{{ 's' if attendance|length != 1 }}</span>
+  </div>
+
+  {% if attendance %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in attendance %}
+            <tr>
+              <td><span class="badge-index">{{ loop.index }}</span></td>
+              <td>{{ record.name }}</td>
+              <td>{{ record.time }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <p>No attendance records yet today.</p>
+      <p style="margin-top:0.5rem; font-size:0.82rem; color:var(--text-muted);">
+        Run <code>face_recognition_system.py</code> to start tracking.
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

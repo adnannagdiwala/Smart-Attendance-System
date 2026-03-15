@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Register via Webcam — Smart Attendance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Register via Webcam</h2>
+  <p>Capture face photos directly from your camera</p>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 360px; gap:1.5rem; align-items:start;">
+
+  <!-- Left: Video feed -->
+  <div class="card">
+    <div class="card-header">
+      <h3>
+        <span class="recording-dot" id="recording-dot"></span>
+        Camera Feed
+      </h3>
+      <button class="btn btn-secondary btn-sm" id="btn-toggle" onclick="toggleCamera()">▶ Start Camera</button>
+    </div>
+
+    <div class="video-container" id="video-container">
+      <div class="video-placeholder" id="video-placeholder">
+        <div class="empty-icon">📷</div>
+        <p>Click "Start Camera" to begin</p>
+      </div>
+      <img id="video-feed" class="video-feed" style="display:none;" alt="Camera feed" />
+    </div>
+  </div>
+
+  <!-- Right: Capture controls -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Capture Photos</h3>
+    </div>
+
+    <form method="POST" action="{{ url_for('register_webcam') }}" id="register-form">
+      <div class="form-group">
+        <label for="person-name">Person's Name</label>
+        <input
+          type="text"
+          id="person-name"
+          name="name"
+          class="form-input"
+          placeholder="e.g. John Doe"
+          required
+          autocomplete="off"
+        />
+      </div>
+
+      <input type="hidden" name="photo_count" id="photo-count" value="0" />
+
+      <button type="button" class="btn btn-primary" id="btn-capture" onclick="capturePhoto()" style="width:100%; justify-content:center; margin-bottom:1rem;" disabled>
+        📸 Capture Photo
+      </button>
+
+      <div class="capture-counter" id="capture-counter">
+        <span id="count-text">0 photos captured</span>
+        <span style="font-size:0.75rem; color:var(--text-muted);">Aim for 3–5 photos</span>
+      </div>
+
+      <div class="capture-thumbnails" id="thumbnails"></div>
+
+      <button type="submit" class="btn btn-primary" id="btn-register" style="width:100%; justify-content:center; margin-top:1rem;" disabled>
+        ✓ Register Person
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  let cameraActive = false;
+  let photoCount = 0;
+
+  function toggleCamera() {
+    if (cameraActive) {
+      stopCam();
+    } else {
+      startCam();
+    }
+  }
+
+  function startCam() {
+    const feed = document.getElementById('video-feed');
+    const placeholder = document.getElementById('video-placeholder');
+    const btn = document.getElementById('btn-toggle');
+    const dot = document.getElementById('recording-dot');
+    const captureBtn = document.getElementById('btn-capture');
+
+    feed.src = '/video-feed/register?' + Date.now();
+    feed.style.display = 'block';
+    placeholder.style.display = 'none';
+    btn.innerHTML = '⏹ Stop Camera';
+    btn.className = 'btn btn-danger btn-sm';
+    dot.classList.add('active');
+    captureBtn.disabled = false;
+    cameraActive = true;
+  }
+
+  function stopCam() {
+    const feed = document.getElementById('video-feed');
+    const placeholder = document.getElementById('video-placeholder');
+    const btn = document.getElementById('btn-toggle');
+    const dot = document.getElementById('recording-dot');
+    const captureBtn = document.getElementById('btn-capture');
+
+    feed.src = '';
+    feed.style.display = 'none';
+    placeholder.style.display = 'flex';
+    btn.innerHTML = '▶ Start Camera';
+    btn.className = 'btn btn-secondary btn-sm';
+    dot.classList.remove('active');
+    captureBtn.disabled = true;
+    cameraActive = false;
+
+    fetch('/api/camera-stop', { method: 'POST' });
+  }
+
+  function capturePhoto() {
+    const name = document.getElementById('person-name').value.trim();
+    if (!name) {
+      alert('Please enter the person\'s name first.');
+      return;
+    }
+
+    const captureBtn = document.getElementById('btn-capture');
+    captureBtn.disabled = true;
+    captureBtn.innerHTML = '⏳ Capturing...';
+
+    fetch('/api/capture-frame', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, index: photoCount + 1 })
+    })
+    .then(r => r.json())
+    .then(data => {
+      captureBtn.disabled = false;
+      captureBtn.innerHTML = '📸 Capture Photo';
+
+      if (data.success) {
+        photoCount++;
+        document.getElementById('photo-count').value = photoCount;
+        document.getElementById('count-text').textContent = `${photoCount} photo${photoCount !== 1 ? 's' : ''} captured`;
+
+        // Add thumbnail indicator
+        const thumbs = document.getElementById('thumbnails');
+        const thumb = document.createElement('div');
+        thumb.className = 'capture-thumb';
+        thumb.innerHTML = `<span>📸</span><span>${photoCount}</span>`;
+        thumbs.appendChild(thumb);
+
+        // Enable register button if 1+ photos
+        if (photoCount >= 1) {
+          document.getElementById('btn-register').disabled = false;
+        }
+      } else {
+        alert(data.message || 'Failed to capture. Try again.');
+      }
+    })
+    .catch(() => {
+      captureBtn.disabled = false;
+      captureBtn.innerHTML = '📸 Capture Photo';
+      alert('Error capturing photo.');
+    });
+  }
+
+  // Lock name field after first capture
+  document.getElementById('register-form').addEventListener('submit', (e) => {
+    if (photoCount === 0) {
+      e.preventDefault();
+      alert('Please capture at least one photo first.');
+    }
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (cameraActive) {
+      fetch('/api/camera-stop', { method: 'POST' });
+    }
+  });
+</script>
+{% endblock %}

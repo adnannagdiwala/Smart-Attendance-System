@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Smart Attendance System — Face Recognition powered attendance tracking dashboard">
+  <title>{% block title %}Smart Attendance{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Mobile hamburger -->
+  <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">☰</button>
+
+  <div class="app-wrapper">
+
+    <!-- ===== Sidebar ===== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <h1>⚡ Smart Attendance</h1>
+        <p>Face Recognition System</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+          <span class="icon">📊</span> Dashboard
+        </a>
+        <a href="{{ url_for('mark_attendance') }}" class="nav-item {% if request.endpoint == 'mark_attendance' %}active{% endif %}">
+          <span class="icon">📷</span> Mark Attendance
+        </a>
+        <a href="{{ url_for('history') }}" class="nav-item {% if request.endpoint == 'history' %}active{% endif %}">
+          <span class="icon">📅</span> History
+        </a>
+        <a href="{{ url_for('people') }}" class="nav-item {% if request.endpoint == 'people' %}active{% endif %}">
+          <span class="icon">👥</span> People
+        </a>
+        <a href="{{ url_for('register') }}" class="nav-item {% if request.endpoint == 'register' %}active{% endif %}">
+          <span class="icon">📤</span> Upload Photos
+        </a>
+        <a href="{{ url_for('register_webcam') }}" class="nav-item {% if request.endpoint == 'register_webcam' %}active{% endif %}">
+          <span class="icon">📸</span> Webcam Register
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <p>Smart Attendance v1.0</p>
+      </div>
+    </aside>
+
+    <!-- ===== Main Content ===== -->
+    <main class="main-content">
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-container">
+            {% for category, message in messages %}
+              <div class="flash-message {{ category }}">
+                {% if category == 'success' %}✓{% else %}✕{% endif %}
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

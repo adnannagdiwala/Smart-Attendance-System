@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Mark Attendance — Smart Attendance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>📷 Mark Attendance</h2>
+  <p>Live face recognition — attendance is logged automatically</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3>
+      <span class="recording-dot" id="recording-dot"></span>
+      Live Camera Feed
+    </h3>
+    <div style="display:flex; gap:0.5rem;">
+      <button class="btn btn-primary btn-sm" id="btn-start" onclick="startCamera()">▶ Start Camera</button>
+      <button class="btn btn-danger btn-sm" id="btn-stop" onclick="stopCamera()" style="display:none;">⏹ Stop Camera</button>
+    </div>
+  </div>
+
+  <div class="video-container" id="video-container">
+    <div class="video-placeholder" id="video-placeholder">
+      <div class="empty-icon">📷</div>
+      <p>Click "Start Camera" to begin attendance tracking</p>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">
+        Faces will be detected and attendance logged automatically
+      </p>
+    </div>
+    <img id="video-feed" class="video-feed" style="display:none;" alt="Live camera feed" />
+  </div>
+</div>
+
+<!-- Live attendance log -->
+<div class="card">
+  <div class="card-header">
+    <h3>Today's Live Log</h3>
+    <button class="btn btn-secondary btn-sm" onclick="refreshLog()">🔄 Refresh</button>
+  </div>
+  <div id="live-log">
+    <div class="empty-state">
+      <p>Attendance logs will appear here as faces are recognized.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let cameraActive = false;
+
+  function startCamera() {
+    const feed = document.getElementById('video-feed');
+    const placeholder = document.getElementById('video-placeholder');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const dot = document.getElementById('recording-dot');
+
+    feed.src = '/video-feed/attendance?' + Date.now();
+    feed.style.display = 'block';
+    placeholder.style.display = 'none';
+    btnStart.style.display = 'none';
+    btnStop.style.display = 'inline-flex';
+    dot.classList.add('active');
+    cameraActive = true;
+
+    // Start refreshing the log
+    startLogRefresh();
+  }
+
+  function stopCamera() {
+    const feed = document.getElementById('video-feed');
+    const placeholder = document.getElementById('video-placeholder');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+    const dot = document.getElementById('recording-dot');
+
+    feed.src = '';
+    feed.style.display = 'none';
+    placeholder.style.display = 'flex';
+    btnStart.style.display = 'inline-flex';
+    btnStop.style.display = 'none';
+    dot.classList.remove('active');
+    cameraActive = false;
+
+    // Tell server to release camera
+    fetch('/api/camera-stop', { method: 'POST' });
+  }
+
+  let logInterval = null;
+  function startLogRefresh() {
+    refreshLog();
+    if (logInterval) clearInterval(logInterval);
+    logInterval = setInterval(() => {
+      if (cameraActive) refreshLog();
+    }, 3000);
+  }
+
+  function refreshLog() {
+    const today = new Date().toISOString().split('T')[0];
+    fetch(`/api/attendance/${today}`)
+      .then(r => r.json())
+      .then(records => {
+        const container = document.getElementById('live-log');
+        if (records.length === 0) {
+          container.innerHTML = '<div class="empty-state"><p>No attendance recorded yet.</p></div>';
+          return;
+        }
+        let html = '<div class="table-wrapper"><table>';
+        html += '<thead><tr><th>#</th><th>Name</th><th>Time</th></tr></thead><tbody>';
+        records.reverse().forEach((r, i) => {
+          html += `<tr>
+            <td><span class="badge-index">${i + 1}</span></td>
+            <td>${r.name}</td>
+            <td><span class="badge badge-success">${r.time}</span></td>
+          </tr>`;
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      })
+      .catch(() => {});
+  }
+
+  // Stop camera when leaving page
+  window.addEventListener('beforeunload', () => {
+    if (cameraActive) {
+      fetch('/api/camera-stop', { method: 'POST' });
+    }
+  });
+</script>
+{% endblock %}

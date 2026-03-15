@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}People — Smart Attendance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Registered People</h2>
+  <p>{{ people|length }} person{{ 's' if people|length != 1 }} in the system</p>
+</div>
+
+<div style="margin-bottom:1.5rem;">
+  <a href="{{ url_for('register') }}" class="btn btn-primary">➕ Register New Person</a>
+</div>
+
+{% if people %}
+  <div class="people-grid">
+    {% for name in people %}
+      <div class="person-card animate-in">
+        <div class="person-avatar">{{ name[0]|upper }}</div>
+        <h4>{{ name }}</h4>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete('{{ name }}')">
+          🗑 Remove
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">👤</div>
+      <p>No people registered yet.</p>
+      <a href="{{ url_for('register') }}" class="btn btn-primary" style="margin-top:1rem;">Register Someone</a>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-box">
+    <h3>⚠️ Delete Person</h3>
+    <p>Are you sure you want to delete <strong id="modal-person-name"></strong>? This will remove their photos, embeddings, and all attendance records.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <form id="modal-delete-form" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

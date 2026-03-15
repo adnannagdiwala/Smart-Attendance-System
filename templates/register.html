@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Register — Smart Attendance{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h2>Register New Person</h2>
+  <p>Upload face photos to register a new person in the system</p>
+</div>
+
+<div class="card" style="max-width: 600px;">
+  <form method="POST" enctype="multipart/form-data" action="{{ url_for('register') }}">
+
+    <div class="form-group">
+      <label for="name-input">Person's Name</label>
+      <input
+        type="text"
+        id="name-input"
+        name="name"
+        class="form-input"
+        placeholder="e.g. John Doe"
+        required
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="form-group">
+      <label>Face Photos</label>
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-icon">📸</div>
+        <p>Drag & drop photos here, or click to browse</p>
+        <p class="upload-hint">Upload 3–5 clear face photos (JPG, PNG, WEBP)</p>
+        <input
+          type="file"
+          id="photo-input"
+          name="photos"
+          accept=".jpg,.jpeg,.png,.webp"
+          multiple
+          required
+        />
+      </div>
+      <div class="file-preview" id="file-preview"></div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+      ✓ Register Person
+    </button>
+
+  </form>
+</div>
+{% endblock %}
